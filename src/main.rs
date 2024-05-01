@@ -6,12 +6,13 @@ use crate::cli::{Cli, Commands};
 mod cli;
 mod commands;
 mod parsing;
+mod utils;
 
 fn main() -> Result<()> {
     color_eyre::install()?;
     let cli = Cli::parse();
     match &cli.command {
-        Commands::Check(args) => commands::check(&args.file)?,
+        Commands::Check(args) => commands::check(args)?,
     }
     Ok(())
 }

@@ -1,4 +1,4 @@
-use std::{fs, path, process, time};
+use std::{fs, process, time};
 use std::collections::HashSet;
 
 use color_eyre::eyre::{Result, WrapErr};
@@ -8,9 +8,20 @@ use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
 use ureq::{Agent, AgentBuilder};
 
+use crate::cli::CheckArgs;
 use crate::parsing::{DOMAIN, parse_thread, ParsingResult, Status};
+use crate::utils;
 
-pub fn check(file: &path::PathBuf) -> Result<()> {
+pub fn check(args: &CheckArgs) -> Result<()> {
+    if !utils::day_passed_since_last_check() && !args.force {
+        println!(
+            "{}: One check allowed per day. Use '-f' flag to force another one.",
+            "Warning".yellow()
+        );
+        process::exit(0);
+    }
+
+    let file = &args.file;
     if !file.exists() {
         println!("{}: File not found!", "Error".red());
         process::exit(0);
@@ -46,8 +57,8 @@ pub fn check(file: &path::PathBuf) -> Result<()> {
     }
 
     bar.finish_and_clear();
-
     print_check_results(results);
+    utils::save_check_timestamp();
 
     Ok(())
 }

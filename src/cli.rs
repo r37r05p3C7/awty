@@ -19,4 +19,7 @@ pub enum Commands {
 pub struct CheckArgs {
     /// File with thread links
     pub file: PathBuf,
+    /// Force check
+    #[arg(short, long)]
+    pub force: bool,
 }

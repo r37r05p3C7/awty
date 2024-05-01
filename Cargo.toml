@@ -17,3 +17,4 @@ kuchikiki = "0.8.2"
 # misc
 color-eyre = { version = "0.6.3", default-features = false }
 regex = "1.10.4"
+dirs = "5.0"
