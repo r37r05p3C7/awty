@@ -1,0 +1,19 @@
+[package]
+name = "awty"
+description = "Are We There Yet? Check the status of your favorite games"
+repository = "https://github.com/r37r05p3C7/awty"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# cli
+clap = { version = "4.5.4", features = ["derive"] }
+indicatif = "0.17.8"
+colored = "2.1.0"
+# parsing
+url = "2.5.0"
+ureq = "2.9.7"
+kuchikiki = "0.8.2"
+# misc
+color-eyre = { version = "0.6.3", default-features = false }
+regex = "1.10.4"
