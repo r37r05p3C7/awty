@@ -6,8 +6,10 @@ use kuchikiki::traits::TendrilSink;
 use regex::Regex;
 use ureq::{Agent, Error};
 
+pub const DOMAIN: &str = "https://f95zone.to";
+
 pub fn parse_thread(id: &str, agent: &Agent) -> ParsingResult {
-    let url = format!("https://f95zone.to/threads/{}", id);
+    let url = format!("{DOMAIN}/threads/{}", id);
 
     let res = match agent.get(&url).call() {
         Ok(res) => res,

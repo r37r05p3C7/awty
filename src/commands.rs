@@ -8,7 +8,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
 use ureq::{Agent, AgentBuilder};
 
-use crate::parsing::{parse_thread, ParsingResult, Status};
+use crate::parsing::{DOMAIN, parse_thread, ParsingResult, Status};
 
 pub fn check(file: &path::PathBuf) -> Result<()> {
     if !file.exists() {
@@ -88,8 +88,9 @@ fn print_results_by_status(results: &Vec<ParsingResult>, header: ColoredString, 
     println!("\n{}:", header);
     for res in iter {
         println!(
-            "  - {}\n    Link: https://f95zone.to/threads/{}",
+            "  - {}\n    Link: {}/threads/{}",
             res.title.bold(),
+            DOMAIN,
             res.id
         );
     }
@@ -104,7 +105,7 @@ fn print_error_results(results: &Vec<ParsingResult>) {
     for res in iter {
         println!(
             "  - {}\n    Error: {}",
-            format!("https://f95zone.to/threads/{}", res.id).bold(),
+            format!("{}/threads/{}", DOMAIN, res.id).bold(),
             res.error.clone().unwrap_or_default().to_string(),
         );
     }
