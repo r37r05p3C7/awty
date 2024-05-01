@@ -28,7 +28,7 @@ pub fn check(file: &path::PathBuf) -> Result<()> {
     println!("{}: Detected {} thread(s)", "Success".green(), amount);
     let mut results: Vec<ParsingResult> = Vec::with_capacity(amount);
     let agent: Agent = AgentBuilder::new()
-        .user_agent(format!(
+        .user_agent(&format!(
             "{}/{}",
             env!("CARGO_PKG_NAME"),
             env!("CARGO_PKG_VERSION")
