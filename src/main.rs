@@ -13,6 +13,7 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     match &cli.command {
         Commands::Check(args) => commands::check(args)?,
+        Commands::Cached(args) => commands::cached(args)?,
     }
     Ok(())
 }

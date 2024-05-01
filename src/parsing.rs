@@ -4,6 +4,7 @@ use color_eyre::eyre::Result;
 use kuchikiki::NodeRef;
 use kuchikiki::traits::TendrilSink;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use ureq::{Agent, Error};
 
 pub const DOMAIN: &str = "https://f95zone.to";
@@ -92,7 +93,7 @@ fn get_status(header: &NodeRef) -> Status {
     return Status::InDevelopment;
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ParsingResult {
     pub id: String,
     pub title: String,
@@ -110,7 +111,7 @@ impl ParsingResult {
     }
 }
 
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize)]
 pub enum Status {
     #[default]
     InDevelopment,

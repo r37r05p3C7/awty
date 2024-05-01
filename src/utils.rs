@@ -1,4 +1,6 @@
-use std::{fs, path, time};
+use std::{fs, path};
+
+use chrono::offset::Utc;
 
 pub fn app_dir() -> path::PathBuf {
     let home = dirs::home_dir().expect("failed to locate home folder?");
@@ -7,36 +9,37 @@ pub fn app_dir() -> path::PathBuf {
     return app_dir;
 }
 
+pub fn cache_dir() -> path::PathBuf {
+    let app_dir = app_dir();
+    let cache_dir = app_dir.join("cached_results");
+    fs::create_dir_all(&cache_dir).expect("failed to create cache dir");
+    return cache_dir;
+}
+
 pub fn day_passed_since_last_check() -> bool {
-    let now = time::SystemTime::now();
-    let past = time::UNIX_EPOCH + time::Duration::from_secs(get_check_timestamp());
-    let elapsed = now.duration_since(past).expect("time went backwards");
-    if elapsed.as_secs() > 86400 {
+    let now = Utc::now().timestamp();
+    let past = get_check_timestamp();
+    if (now - past) > 86400 {
         return true;
     }
     return false;
 }
 
-pub fn get_check_timestamp() -> u64 {
+pub fn get_check_timestamp() -> i64 {
     let app_dir = app_dir();
     let file = app_dir.join("timestamp");
     if !file.exists() {
         return 0;
     }
     let string = fs::read_to_string(file).expect("failed to read timestamp");
-    let Ok(stamp) = string.parse::<u64>() else {
+    let Ok(stamp) = string.parse::<i64>() else {
         return 0;
     };
     return stamp;
 }
 
-pub fn save_check_timestamp() {
+pub fn save_check_timestamp(timestamp: i64) {
     let app_dir = app_dir();
     let file = app_dir.join("timestamp");
-    let now = time::SystemTime::now();
-    let since_epoch = now
-        .duration_since(time::UNIX_EPOCH)
-        .expect("time went backwards");
-    fs::write(file, since_epoch.as_secs().to_string())
-        .expect("failed to write a timestamp to a file");
+    fs::write(file, timestamp.to_string()).expect("failed to write a timestamp to a file");
 }

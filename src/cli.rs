@@ -13,6 +13,8 @@ pub struct Cli {
 pub enum Commands {
     /// Check for updates
     Check(CheckArgs),
+    /// Show cached results
+    Cached(CachedArgs),
 }
 
 #[derive(Args)]
@@ -22,4 +24,10 @@ pub struct CheckArgs {
     /// Force check
     #[arg(short, long)]
     pub force: bool,
+}
+
+#[derive(Args)]
+pub struct CachedArgs {
+    /// Select older cache by offset
+    pub offset: Option<i64>,
 }
