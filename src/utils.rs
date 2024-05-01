@@ -1,6 +1,7 @@
 use std::{fs, path};
 
 use chrono::offset::Utc;
+use colored::Colorize;
 
 pub fn app_dir() -> path::PathBuf {
     let home = dirs::home_dir().expect("failed to locate home folder?");
@@ -42,4 +43,16 @@ pub fn save_check_timestamp(timestamp: i64) {
     let app_dir = app_dir();
     let file = app_dir.join("timestamp");
     fs::write(file, timestamp.to_string()).expect("failed to write a timestamp to a file");
+}
+
+pub fn error(msg: &str) {
+    println!("{}: {}", "Error".red(), msg);
+}
+
+pub fn warning(msg: &str) {
+    println!("{}: {}", "Warning".yellow(), msg);
+}
+
+pub fn success(msg: &str) {
+    println!("{}: {}", "Success".green(), msg);
 }

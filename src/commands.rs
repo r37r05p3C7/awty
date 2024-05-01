@@ -15,16 +15,13 @@ use crate::utils;
 
 pub fn check(args: &CheckArgs) -> Result<()> {
     if !utils::day_passed_since_last_check() && !args.force {
-        println!(
-            "{}: One check allowed per day. Use '-f' flag to force another one.",
-            "Warning".yellow()
-        );
+        utils::warning("One check allowed per day. Use '-f' flag to force another one.");
         process::exit(0);
     }
 
     let file = &args.file;
     if !file.exists() {
-        println!("{}: File not found!", "Error".red());
+        utils::error("File not found!");
         process::exit(0);
     }
 
@@ -33,11 +30,11 @@ pub fn check(args: &CheckArgs) -> Result<()> {
     let amount = ids.len();
 
     if amount == 0 {
-        println!("{}: Detected 0 threads!", "Error".red());
+        utils::error("Detected 0 threads!");
         process::exit(0);
     }
 
-    println!("{}: Detected {} thread(s)", "Success".green(), amount);
+    utils::success(&format!("Detected {} thread(s)", amount));
     let mut results: Vec<ParsingResult> = Vec::with_capacity(amount);
     let agent: Agent = AgentBuilder::new()
         .user_agent(&format!(
@@ -142,7 +139,7 @@ pub fn cached(args: &CachedArgs) -> Result<()> {
     let mut offset = 0;
     if let Some(o) = args.offset {
         if o < 0 {
-            println!("{}: Offset should be positive.", "Error".red());
+            utils::error("Offset should be positive.");
             process::exit(0);
         }
         offset = o;
@@ -160,7 +157,7 @@ pub fn cached(args: &CachedArgs) -> Result<()> {
     }
 
     if dirs_with_metadata.is_empty() {
-        println!("{}: No cached results found.", "Error".red());
+        utils::error("No cached results found.");
         process::exit(0);
     }
 
@@ -168,16 +165,13 @@ pub fn cached(args: &CachedArgs) -> Result<()> {
     dirs_with_metadata.reverse();
 
     let Some((_, entry)) = dirs_with_metadata.get(offset as usize) else {
-        println!(
-            "{}: Entry with offset {offset} does not exist.",
-            "Error".red()
-        );
+        utils::error(&format!("Entry with offset {offset} does not exist."));
         process::exit(0);
     };
 
     let file = entry.path().join("results.json");
     if !file.exists() {
-        println!("{}: Results file is missing.", "Error".red());
+        utils::error("Results file is missing.");
         process::exit(0);
     }
 
