@@ -10,7 +10,7 @@ use regex::Regex;
 use ureq::{Agent, AgentBuilder};
 
 use crate::cli::{CachedArgs, CheckArgs};
-use crate::parsing::{DOMAIN, parse_thread, ParsingResult, Status};
+use crate::parsing::{DOMAIN, parse_thread, ThreadSlug, Status};
 use crate::utils;
 
 pub fn check(args: &CheckArgs) -> Result<()> {
@@ -34,8 +34,8 @@ pub fn check(args: &CheckArgs) -> Result<()> {
         process::exit(0);
     }
 
-    utils::success(&format!("Detected {} thread(s)", amount));
-    let mut results: Vec<ParsingResult> = Vec::with_capacity(amount);
+    utils::success(&format!("Detected {amount} thread(s)"));
+    let mut results: Vec<ThreadSlug> = Vec::with_capacity(amount);
     let agent: Agent = AgentBuilder::new()
         .user_agent(&format!(
             "{}/{}",
@@ -71,10 +71,10 @@ fn extract_thread_ids(text: &str) -> HashSet<String> {
             threads.insert(id.as_str().to_string());
         }
     }
-    return threads;
+    threads
 }
 
-fn print_check_results(results: &Vec<ParsingResult>) {
+fn print_check_results(results: &[ThreadSlug]) {
     println!(
         "\nGames still in development: {}/{}",
         results
@@ -84,19 +84,20 @@ fn print_check_results(results: &Vec<ParsingResult>) {
         results.len()
     );
 
-    print_results_by_status(&results, "Completed".bright_blue(), Status::Completed);
-    print_results_by_status(&results, "Abandoned".yellow(), Status::Abandoned);
-    print_results_by_status(&results, "On hold".bright_cyan(), Status::OnHold);
+    print_results_by_status(results, "Completed".bright_blue(), Status::Completed);
+    print_results_by_status(results, "Abandoned".yellow(), Status::Abandoned);
+    print_results_by_status(results, "On hold".bright_cyan(), Status::OnHold);
 
-    print_error_results(&results);
+    print_error_results(results);
 }
 
-fn print_results_by_status(results: &Vec<ParsingResult>, header: ColoredString, status: Status) {
+#[allow(clippy::needless_pass_by_value)]
+fn print_results_by_status(results: &[ThreadSlug], header: ColoredString, status: Status) {
     let iter = results.iter().filter(|r| r.status == status);
     if iter.clone().count() == 0 {
         return;
     }
-    println!("\n{}:", header);
+    println!("\n{header}:");
     for res in iter {
         println!(
             "  - {}\n    Link: {}/threads/{}",
@@ -107,7 +108,7 @@ fn print_results_by_status(results: &Vec<ParsingResult>, header: ColoredString, 
     }
 }
 
-fn print_error_results(results: &Vec<ParsingResult>) {
+fn print_error_results(results: &[ThreadSlug]) {
     let iter = results.iter().filter(|r| r.error.is_some());
     if iter.clone().count() == 0 {
         return;
@@ -117,12 +118,12 @@ fn print_error_results(results: &Vec<ParsingResult>) {
         println!(
             "  - {}\n    Error: {}",
             format!("{}/threads/{}", DOMAIN, res.id).bold(),
-            res.error.clone().unwrap_or_default().to_string(),
+            res.error.clone().unwrap_or_default(),
         );
     }
 }
 
-fn cache_results(results: &Vec<ParsingResult>, timestamp: i64) -> Result<()> {
+fn cache_results(results: &Vec<ThreadSlug>, timestamp: i64) -> Result<()> {
     let cache_dir = utils::cache_dir();
     let datetime: DateTime<Utc> =
         DateTime::from_timestamp(timestamp, 0).expect("invalid timestamp");
@@ -164,6 +165,7 @@ pub fn cached(args: &CachedArgs) -> Result<()> {
     dirs_with_metadata.sort_by_key(|&(creation_time, _)| creation_time);
     dirs_with_metadata.reverse();
 
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
     let Some((_, entry)) = dirs_with_metadata.get(offset as usize) else {
         utils::error(&format!("Entry with offset {offset} does not exist."));
         process::exit(0);
@@ -176,7 +178,7 @@ pub fn cached(args: &CachedArgs) -> Result<()> {
     }
 
     let file = fs::File::open(file).wrap_err("failed to open cached results file")?;
-    let results: Vec<ParsingResult> =
+    let results: Vec<ThreadSlug> =
         serde_json::from_reader(file).wrap_err("failed to deserialize cached results")?;
 
     print_check_results(&results);

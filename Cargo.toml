@@ -4,6 +4,7 @@ description = "Are We There Yet? Check the status of your favorite games"
 repository = "https://github.com/r37r05p3C7/awty"
 version = "0.1.0"
 edition = "2021"
+license = "MIT"
 
 [dependencies]
 # cli

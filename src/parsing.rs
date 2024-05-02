@@ -9,33 +9,33 @@ use ureq::{Agent, Error};
 
 pub const DOMAIN: &str = "https://f95zone.to";
 
-pub fn parse_thread(id: &str, agent: &Agent) -> ParsingResult {
-    let url = format!("{DOMAIN}/threads/{}", id);
+pub fn parse_thread(id: &str, agent: &Agent) -> ThreadSlug {
+    let url = format!("{DOMAIN}/threads/{id}");
 
     let res = match agent.get(&url).call() {
         Ok(res) => res,
         Err(Error::Status(code, res)) => {
-            return ParsingResult::error(
+            return ThreadSlug::error(
                 id,
                 &format!("Bad response code: {} {}", code, res.status_text()),
             );
         }
-        Err(err) => return ParsingResult::error(id, &format!("Network error: {err}")),
+        Err(err) => return ThreadSlug::error(id, &format!("Network error: {err}")),
     };
 
     let Ok(body) = res.into_string() else {
-        return ParsingResult::error(id, "Failed to read response body");
+        return ThreadSlug::error(id, "Failed to read response body");
     };
 
     let html = kuchikiki::parse_html().one(body);
-    let header = match html.select(".p-title").expect("Selector error").nth(0) {
+    let header = match html.select(".p-title").expect("Selector error").next() {
         Some(node_data) => node_data.as_node().to_owned(),
-        None => return ParsingResult::error(id, "Failed to locate thread header"),
+        None => return ThreadSlug::error(id, "Failed to locate thread header"),
     };
     let title = get_title(&header);
     let status = get_status(&header);
 
-    ParsingResult {
+    ThreadSlug {
         id: id.to_string(),
         title,
         status,
@@ -48,7 +48,7 @@ fn get_title(header: &NodeRef) -> String {
 
     let title_node = match header.select_first(".p-title-value") {
         Ok(node) => node.as_node().children(),
-        Err(_) => return title,
+        Err(()) => return title,
     };
 
     // Removes prefixes: "[prefix1] [prefix2] Title [suffix]" -> "Title [suffix]"
@@ -71,7 +71,7 @@ fn get_title(header: &NodeRef) -> String {
         }
     }
 
-    return title;
+    title
 }
 
 fn get_status(header: &NodeRef) -> Status {
@@ -86,24 +86,24 @@ fn get_status(header: &NodeRef) -> Status {
         prefixes.push(text.borrow().to_string());
     }
     for prefix in &prefixes {
-        if let Ok(Some(status)) = Status::from_str(&prefix) {
+        if let Ok(Some(status)) = Status::from_str(prefix) {
             return status;
         }
     }
-    return Status::InDevelopment;
+    Status::InDevelopment
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct ParsingResult {
+pub struct ThreadSlug {
     pub id: String,
     pub title: String,
     pub status: Status,
     pub error: Option<String>,
 }
 
-impl ParsingResult {
-    pub fn error(id: &str, msg: &str) -> ParsingResult {
-        ParsingResult {
+impl ThreadSlug {
+    pub fn error(id: &str, msg: &str) -> ThreadSlug {
+        ThreadSlug {
             id: id.to_string(),
             error: Some(String::from(msg)),
             ..Default::default()

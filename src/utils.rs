@@ -7,14 +7,14 @@ pub fn app_dir() -> path::PathBuf {
     let home = dirs::home_dir().expect("failed to locate home folder?");
     let app_dir = home.join("Documents").join(env!("CARGO_PKG_NAME"));
     fs::create_dir_all(&app_dir).expect("failed to create app dir");
-    return app_dir;
+    app_dir
 }
 
 pub fn cache_dir() -> path::PathBuf {
     let app_dir = app_dir();
     let cache_dir = app_dir.join("cached_results");
     fs::create_dir_all(&cache_dir).expect("failed to create cache dir");
-    return cache_dir;
+    cache_dir
 }
 
 pub fn day_passed_since_last_check() -> bool {
@@ -23,7 +23,7 @@ pub fn day_passed_since_last_check() -> bool {
     if (now - past) > 86400 {
         return true;
     }
-    return false;
+    false
 }
 
 pub fn get_check_timestamp() -> i64 {
@@ -36,7 +36,7 @@ pub fn get_check_timestamp() -> i64 {
     let Ok(stamp) = string.parse::<i64>() else {
         return 0;
     };
-    return stamp;
+    stamp
 }
 
 pub fn save_check_timestamp(timestamp: i64) {
