@@ -34,7 +34,8 @@ pub fn check(args: &CheckArgs) -> Result<()> {
         process::exit(0);
     }
 
-    utils::success(&format!("Detected {amount} thread(s)"));
+    println!();
+    utils::success(&format!("Detected {amount} thread(s)\n"));
     let mut results: Vec<ThreadSlug> = Vec::with_capacity(amount);
     let agent: Agent = AgentBuilder::new()
         .user_agent(&format!(
@@ -53,7 +54,8 @@ pub fn check(args: &CheckArgs) -> Result<()> {
         results.push(parse_thread(&id, &agent));
         bar.inc(1);
     }
-    bar.finish_and_clear();
+    bar.finish();
+    println!();
 
     let timestamp = Utc::now().timestamp();
     print_check_results(&results);
