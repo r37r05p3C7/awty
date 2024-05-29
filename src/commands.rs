@@ -1,7 +1,7 @@
-use std::{fs, process, time};
 use std::collections::HashSet;
+use std::{fs, process, time};
 
-use chrono::{DateTime, offset::Utc};
+use chrono::{offset::Utc, DateTime};
 use color_eyre::eyre::{Result, WrapErr};
 use color_eyre::owo_colors::OwoColorize;
 use colored::{ColoredString, Colorize};
