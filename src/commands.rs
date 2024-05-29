@@ -5,12 +5,13 @@ use chrono::{offset::Utc, DateTime};
 use color_eyre::eyre::{Result, WrapErr};
 use color_eyre::owo_colors::OwoColorize;
 use colored::{ColoredString, Colorize};
+use cookie_store::CookieStore;
 use indicatif::{ProgressBar, ProgressStyle};
 use regex::Regex;
-use ureq::{Agent, AgentBuilder};
+use ureq::{Agent, AgentBuilder, Cookie};
 
 use crate::cli::{CachedArgs, CheckArgs};
-use crate::parsing::{DOMAIN, parse_thread, ThreadSlug, Status};
+use crate::parsing::{self, parse_thread, Status, ThreadSlug, HOST};
 use crate::utils;
 
 pub fn check(args: &CheckArgs) -> Result<()> {
@@ -36,7 +37,19 @@ pub fn check(args: &CheckArgs) -> Result<()> {
 
     println!();
     utils::success(&format!("Detected {amount} thread(s)\n"));
-    let mut results: Vec<ThreadSlug> = Vec::with_capacity(amount);
+
+    let mut auth_attempt = false;
+    let host = url::Url::parse(HOST)?;
+    let mut cookiestore = CookieStore::new(None);
+    if let Some(token) = &args.xf_user {
+        cookiestore.insert_raw(&Cookie::new("xf_user", token), &host)?;
+        auth_attempt = true;
+    };
+    if let Some(token) = &args.xf_tfa_trust {
+        cookiestore.insert_raw(&Cookie::new("xf_tfa_trust", token), &host)?;
+        auth_attempt = true;
+    };
+
     let agent: Agent = AgentBuilder::new()
         .user_agent(&format!(
             "{}/{}",
@@ -45,10 +58,19 @@ pub fn check(args: &CheckArgs) -> Result<()> {
         ))
         .timeout_read(time::Duration::from_secs(5))
         .timeout_write(time::Duration::from_secs(5))
+        .cookie_store(cookiestore)
         .build();
+
+    if auth_attempt && !parsing::logged_in(&agent) {
+        utils::error("Authentication failed!");
+        std::process::exit(0);
+    }
+
     let bar = ProgressBar::new(amount as u64);
     let template = "[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({percent}%)";
     bar.set_style(ProgressStyle::with_template(template)?.progress_chars("##-"));
+
+    let mut results: Vec<ThreadSlug> = Vec::with_capacity(amount);
 
     for id in ids {
         results.push(parse_thread(&id, &agent));
@@ -102,9 +124,8 @@ fn print_results_by_status(results: &[ThreadSlug], header: ColoredString, status
     println!("\n{header}:");
     for res in iter {
         println!(
-            "  - {}\n    Link: {}/threads/{}",
+            "  - {}\n    Link: {HOST}/threads/{}",
             res.title.bold(),
-            DOMAIN,
             res.id
         );
     }
@@ -119,7 +140,7 @@ fn print_error_results(results: &[ThreadSlug]) {
     for res in iter {
         println!(
             "  - {}\n    Error: {}",
-            format!("{}/threads/{}", DOMAIN, res.id).bold(),
+            format!("{HOST}/threads/{}", res.id).bold(),
             res.error.clone().unwrap_or_default(),
         );
     }

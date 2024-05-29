@@ -1,18 +1,32 @@
 use std::default::Default;
 
 use color_eyre::eyre::Result;
-use kuchikiki::NodeRef;
 use kuchikiki::traits::TendrilSink;
+use kuchikiki::NodeRef;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use ureq::{Agent, Error};
 
-pub const DOMAIN: &str = "https://f95zone.to";
+use crate::utils::error;
+
+pub const HOST: &str = "https://f95zone.to";
+
+pub fn logged_in(agent: &Agent) -> bool {
+    let url = format!("{HOST}/account");
+    match agent.get(&url).call() {
+        Ok(_) => true,
+        Err(Error::Status(_, _)) => false,
+        Err(Error::Transport(err)) => {
+            error(&format!("Network error: {err}"));
+            std::process::exit(1);
+        }
+    }
+}
 
 pub fn parse_thread(id: &str, agent: &Agent) -> ThreadSlug {
-    let url = format!("{DOMAIN}/threads/{id}");
+    let url = format!("{HOST}/threads/{id}");
 
-    let res = match agent.get(&url).call() {
+    let res = match agent.get(url.as_str()).call() {
         Ok(res) => res,
         Err(Error::Status(code, res)) => {
             return ThreadSlug::error(

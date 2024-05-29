@@ -24,6 +24,12 @@ pub struct CheckArgs {
     /// Force check
     #[arg(short, long)]
     pub force: bool,
+    /// Authentication token
+    #[arg(long)]
+    pub xf_user: Option<String>,
+    /// Authentication token for 2FA accounts
+    #[arg(long)]
+    pub xf_tfa_trust: Option<String>,
 }
 
 #[derive(Args)]
